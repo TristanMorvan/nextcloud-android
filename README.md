@@ -4,6 +4,22 @@
 -->
 # [Nextcloud](https://nextcloud.com) Android app :iphone:
 
+> [!WARNING]
+> **Fork personnel (TristanMorvan) - ne pas confondre avec l'app officielle.**
+> Build signe avec une cle privee personnelle : il ne se met jamais a jour par-dessus
+> l'app du Play Store, et l'inverse non plus. **Desinstaller l'app officielle avant d'installer celui-ci.**
+>
+> **Pourquoi ce fork :** le correctif du tap en plein ecran (masque le nom du fichier et la barre
+> de statut, commit amont `05b5f2680`, PR [#17724](https://github.com/nextcloud/android/pull/17724))
+> est sur `master` mais n'a jamais ete reporte sur `stable-35.0.x`
+> ([#17726](https://github.com/nextcloud/android/pull/17726) fermee sans merge).
+>
+> **Aucun code modifie ici :** l'APK est `master` amont compile tel quel. Voir la release
+> [titucle-35.1.0](https://github.com/TristanMorvan/nextcloud-android/releases/tag/titucle-35.1.0)
+> (asset `titucle-nextcloud.apk`, SHA-256 et empreinte de signature rappelles).
+
+
+
 [![REUSE status](https://api.reuse.software/badge/github.com/nextcloud/android)](https://api.reuse.software/info/github.com/nextcloud/android) [![Build Status](https://drone.nextcloud.com/api/badges/nextcloud/android/status.svg)](https://drone.nextcloud.com/nextcloud/android) [![Releases](https://img.shields.io/github/release/nextcloud/android.svg)](https://github.com/nextcloud/android/releases/latest)
 
 [<img src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" 
@@ -14,7 +30,7 @@ alt="Get it on F-Droid"
 height="80">](https://f-droid.org/packages/com.nextcloud.client/)
 [<img src="https://github.com/user-attachments/assets/713d71c5-3dec-4ec4-a3f2-8d28d025a9c6"
 alt="Get it with Obtainium"
-height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.nextcloud.client%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fnextcloud%2Fandroid%22%2C%22author%22%3A%22nextcloud%22%2C%22name%22%3A%22Nextcloud%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22filterReleaseNotesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22verifyLatestTag%5C%22%3Afalse%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22useLatestAssetDateAsReleaseDate%5C%22%3Afalse%2C%5C%22releaseTitleAsVersion%5C%22%3Afalse%2C%5C%22trackOnly%5C%22%3Afalse%2C%5C%22versionExtractionRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22matchGroupToUse%5C%22%3A%5C%22%5C%22%2C%5C%22versionDetection%5C%22%3Atrue%2C%5C%22releaseDateAsVersion%5C%22%3Afalse%2C%5C%22useVersionCodeAsOSVersion%5C%22%3Afalse%2C%5C%22apkFilterRegEx%5C%22%3A%5C%22%5Enextcloud.*%5C%22%2C%5C%22invertAPKFilter%5C%22%3Afalse%2C%5C%22autoApkFilterByArch%5C%22%3Atrue%2C%5C%22appName%5C%22%3A%5C%22%5C%22%2C%5C%22appAuthor%5C%22%3A%5C%22%5C%22%2C%5C%22shizukuPretendToBeGooglePlay%5C%22%3Afalse%2C%5C%22allowInsecure%5C%22%3Afalse%2C%5C%22exemptFromBackgroundUpdates%5C%22%3Afalse%2C%5C%22skipUpdateNotifications%5C%22%3Afalse%2C%5C%22about%5C%22%3A%5C%22Nextcloud%20ist%20eine%20Cloudanwendung%2C%20die%20selbst%20gehostet%20werden%20kann.%5C%22%2C%5C%22refreshBeforeDownload%5C%22%3Atrue%7D%22%2C%22overrideSource%22%3Anull%7D)
+height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%257B%2522id%2522%253A%2522com.nextcloud.client%2522%252C%2522url%2522%253A%2522https%253A%252F%252Fgithub.com%252FTristanMorvan%252Fnextcloud-android%2522%252C%2522author%2522%253A%2522TristanMorvan%2522%252C%2522name%2522%253A%2522Nextcloud%2522%252C%2522preferredApkIndex%2522%253A0%252C%2522additionalSettings%2522%253A%2522%257B%255C%2522includePrereleases%255C%2522%253Atrue%252C%255C%2522fallbackToOlderReleases%255C%2522%253Atrue%252C%255C%2522filterReleaseTitlesByRegEx%255C%2522%253A%255C%2522%255C%2522%252C%255C%2522filterReleaseNotesByRegEx%255C%2522%253A%255C%2522%255C%2522%252C%255C%2522verifyLatestTag%255C%2522%253Afalse%252C%255C%2522sortMethodChoice%255C%2522%253A%255C%2522date%255C%2522%252C%255C%2522useLatestAssetDateAsReleaseDate%255C%2522%253Afalse%252C%255C%2522releaseTitleAsVersion%255C%2522%253Afalse%252C%255C%2522trackOnly%255C%2522%253Afalse%252C%255C%2522versionExtractionRegEx%255C%2522%253A%255C%2522%255C%2522%252C%255C%2522matchGroupToUse%255C%2522%253A%255C%2522%255C%2522%252C%255C%2522versionDetection%255C%2522%253Atrue%252C%255C%2522releaseDateAsVersion%255C%2522%253Afalse%252C%255C%2522useVersionCodeAsOSVersion%255C%2522%253Afalse%252C%255C%2522apkFilterRegEx%255C%2522%253A%255C%2522%255Etitucle-nextcloud.%252A%255C%2522%252C%255C%2522invertAPKFilter%255C%2522%253Afalse%252C%255C%2522autoApkFilterByArch%255C%2522%253Atrue%252C%255C%2522appName%255C%2522%253A%255C%2522Nextcloud%2520%2528build%2520perso%2529%255C%2522%252C%255C%2522appAuthor%255C%2522%253A%255C%2522TristanMorvan%255C%2522%252C%255C%2522shizukuPretendToBeGooglePlay%255C%2522%253Afalse%252C%255C%2522allowInsecure%255C%2522%253Afalse%252C%255C%2522exemptFromBackgroundUpdates%255C%2522%253Afalse%252C%255C%2522skipUpdateNotifications%255C%2522%253Afalse%252C%255C%2522about%255C%2522%253A%255C%2522Client%2520Nextcloud%2520-%2520build%2520personnel%2520signe%2520cles%2520privee%252C%2520correctif%2520plein%2520ecran%252035.1.0%255C%2522%252C%255C%2522refreshBeforeDownload%255C%2522%253Atrue%257D%2522%252C%2522overrideSource%2522%253Anull%257D)
 
 Signing certificate fingerprint to [verify](https://developer.android.com/studio/command-line/apksigner#usage-verify) the APK using the official Android documentation.
 - APK with "gplay" name, found [here](https://github.com/nextcloud/android/releases) or distributed via Google Play Store
