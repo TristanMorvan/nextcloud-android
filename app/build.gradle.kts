@@ -105,7 +105,7 @@ android {
             "TEST_SERVER_PASSWORD" to ncTestServerPassword.toString(),
             "disableAnalytics" to "true"
         )
-        applicationId = "com.nextcloud.client"
+        applicationId = "com.nextcloud.client.titucle"
         minSdk = 28
         compileSdk = 37
         targetSdk = 36
@@ -149,17 +149,17 @@ android {
         productFlavors {
             // used for f-droid
             register("generic") {
-                applicationId = "com.nextcloud.client"
+                applicationId = "com.nextcloud.client.titucle"
                 dimension = "default"
             }
 
             register("gplay") {
-                applicationId = "com.nextcloud.client"
+                applicationId = "com.nextcloud.client.titucle"
                 dimension = "default"
             }
 
             register("huawei") {
-                applicationId = "com.nextcloud.client"
+                applicationId = "com.nextcloud.client.titucle"
                 dimension = "default"
             }
 
