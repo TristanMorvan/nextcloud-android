@@ -354,7 +354,7 @@
     <string name="downloader_download_failed_ticker">Download failed</string>
     <string name="downloader_download_failed_content">Could not download %1$s</string>
     <string name="downloader_not_downloaded_yet">Not downloaded yet</string>
-    <string name="downloader_file_download_cancelled">Certain files were canceled during the download by user</string>
+    <string name="downloader_download_canceled">Download canceled</string>
     <string name="downloader_file_download_failed">Error occurred while downloading files</string>
     <string name="downloader_unexpected_error">Unexpected error occurred while downloading files</string>
     <string name="downloader_download_failed_credentials_error">Download failed, log in again</string>
@@ -1019,7 +1019,7 @@
     <string name="file_detail_sharing_fragment_no_contact_app_message">No app available to select contacts</string>
     <string name="file_detail_share_already_active">You cannot create a share, sharing is already active from this user.</string>
 
-    <string name="end_to_end_encryption_certificate_verification_failed">Failed to verify public key</string>
+    <string name="end_to_end_encryption_could_not_verify_certificate">Could not verify the encryption certificate</string>
     <string name="end_to_end_encryption_server_public_key_unavailable">Unable to retrieve public key</string>
     <string name="end_to_end_encryption_server_private_key_unavailable">Unable to retrieve private key</string>
     <string name="end_to_end_encryption_certificate_unavailable">Unable to retrieve server certificate</string>
@@ -1161,6 +1161,7 @@
     <string name="upload_local_storage_not_copied">File could not be copied to local storage</string>
     <string name="upload_global_pause_title">All uploads are paused</string>
     <string name="upload_quota_exceeded">Storage quota exceeded</string>
+    <string name="upload_quota_exceeded_notification_description">Your storage quota is full, so uploads were stopped. Free up space or ask your administrator for more quota, then retry the failed uploads from Uploads.</string>
     <string name="host_not_available">Server not available</string>
     <string name="delete_entries">Delete entries</string>
     <string name="upload_list_expand_header">Toggle expansion of header</string>
@@ -1516,9 +1517,7 @@
     <string name="encryption_key_handle_key_removed_title">Encryption keys changed</string>
     <string name="encryption_key_handle_no_keys_description">This folder cannot be opened because its encryption keys no longer exist on this device or on the server.</string>
     <string name="encryption_key_handle_folder_read_only_description">The encryption keys of this account were removed or replaced, so the contents of this folder can no longer be decrypted.\n\nThe folder is read only from now on. To use encrypted folders again, backup this folder and set up your new encryption key in the settings.</string>
-    <string name="encryption_key_handle_setup_new_key_before_encrypting_description">The encryption keys of this account were removed or replaced.\n\nSet up your new encryption key in the settings before you encrypt a folder.</string>
-    <string name="encryption_key_handle_key_keys_only_on_device_outdated_description">The encryption key stored on this device is not valid anymore. Keys are revoked from server. \n\nBackup previously created encrypted folder. \n\nThen remove encryption locally from settings to create new encryption folder.</string>
-    <string name="encryption_key_handle_key_keys_only_on_device_description">The encryption key stored on this device is not valid anymore. Keys are revoked from server. \n\nRemove encryption locally from settings to create new encryption folder.</string>
+    <string name="encryption_key_handle_keys_changed_on_server_description">The encryption keys on the server were removed or replaced, so encrypted folders are read-only on this device.\n\nTo keep using end-to-end encryption, back up your encrypted files, remove encryption locally in the settings and set it up again.</string>
 
     <string name="internal_two_way_sync">Internal two way sync</string>
     <string name="prefs_two_way_sync_summary">Manage internal folders for two way sync</string>

@@ -13,12 +13,9 @@
  */
 package com.owncloud.android.datamodel;
 
-import android.annotation.SuppressLint;
 import android.content.ContentProviderClient;
 import android.content.ContentProviderOperation;
-import android.content.ContentProviderResult;
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.OperationApplicationException;
@@ -47,9 +44,8 @@ import com.nextcloud.model.OfflineOperationRawType;
 import com.nextcloud.model.OfflineOperationType;
 import com.nextcloud.model.ShareeEntry;
 import com.nextcloud.utils.AppConstants;
-import com.nextcloud.utils.date.DateFormatPattern;
+import com.nextcloud.utils.ResultParser;
 import com.nextcloud.utils.e2ee.E2EVersionHelper;
-import com.nextcloud.utils.extensions.DateExtensionsKt;
 import com.nextcloud.utils.extensions.FileDataStorageManagerExtensionsKt;
 import com.nextcloud.utils.extensions.FileExtensionsKt;
 import com.nextcloud.utils.extensions.OCFileExtensionsKt;
@@ -73,7 +69,6 @@ import com.owncloud.android.lib.resources.status.E2EVersion;
 import com.owncloud.android.lib.resources.status.OCCapability;
 import com.owncloud.android.lib.resources.tags.Tag;
 import com.owncloud.android.operations.RemoteOperationFailedException;
-import com.owncloud.android.operations.UploadFileOperation;
 import com.owncloud.android.utils.FileStorageUtils;
 import com.owncloud.android.utils.MimeType;
 import com.owncloud.android.utils.MimeTypeUtil;
@@ -84,11 +79,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -116,11 +108,12 @@ public class FileDataStorageManager {
     private final ContentProviderClient contentProviderClient;
     private final User user;
 
-    public final RecommendedFileDao recommendedFileDao = NextcloudDatabase.getInstance(MainApp.getAppContext()).recommendedFileDao();
-    public final OfflineOperationDao offlineOperationDao = NextcloudDatabase.getInstance(MainApp.getAppContext()).offlineOperationDao();
-    public final FileDao fileDao = NextcloudDatabase.getInstance(MainApp.getAppContext()).fileDao();
-    public final ShareDao shareDao = NextcloudDatabase.getInstance(MainApp.getAppContext()).shareDao();
-    public final CapabilityDao capabilityDao = NextcloudDatabase.instance().capabilityDao();
+    public final NextcloudDatabase db = NextcloudDatabase.instance();
+    public final RecommendedFileDao recommendedFileDao = db.recommendedFileDao();
+    public final OfflineOperationDao offlineOperationDao = db.offlineOperationDao();
+    public final FileDao fileDao = db.fileDao();
+    public final ShareDao shareDao = db.shareDao();
+    public final CapabilityDao capabilityDao = db.capabilityDao();
 
     private final Gson gson = new Gson();
     public final OfflineOperationsRepositoryType offlineOperationsRepository;
@@ -197,7 +190,9 @@ public class FileDataStorageManager {
             entity.setModifiedAt(modificationTimestamp / AppConstants.MILLIS_PER_SECOND);
             entity.setFilename(new File(remotePath).getName());
 
-            String parentPath = new File(remotePath).getParent() + OCFile.PATH_SEPARATOR;
+            addCreateFolderOfflineOperationsForMissingParents(remotePath);
+
+            String parentPath = FileStorageUtils.getParentPath(remotePath);
             OCFile parentFile = getFileByDecryptedRemotePath(parentPath);
 
             if (parentFile != null) {
@@ -207,6 +202,24 @@ public class FileDataStorageManager {
             offlineOperationDao.insert(entity);
             createPendingFile(remotePath, mimeType, createdAt, modificationTimestamp, localPath);
         }
+    }
+
+    private void addCreateFolderOfflineOperationsForMissingParents(String remotePath) {
+        String parentPath = FileStorageUtils.getParentPath(remotePath);
+        if (parentPath == null || OCFile.ROOT_PATH.equals(parentPath)) {
+            return;
+        }
+
+        if (getFileByEncryptedRemotePath(parentPath) != null) {
+            return;
+        }
+
+        addCreateFolderOfflineOperationsForMissingParents(parentPath);
+
+        String grandParentPath = FileStorageUtils.getParentPath(parentPath);
+        OCFile grandParent = grandParentPath == null ? null : getFileByEncryptedRemotePath(grandParentPath);
+        Long grandParentId = grandParent == null ? null : grandParent.getFileId();
+        addCreateFolderOfflineOperation(parentPath, new File(parentPath).getName(), grandParentId);
     }
 
     public OfflineOperationEntity getOfflineEntityFromOCFile(OCFile file) {
@@ -283,6 +296,8 @@ public class FileDataStorageManager {
     }
 
     public void addRenameFileOfflineOperation(OCFile file, String newName) {
+        deletePendingRenameOperations(file.getDecryptedRemotePath());
+
         OfflineOperationEntity entity = new OfflineOperationEntity();
 
         entity.setFilename(newName);
@@ -324,10 +339,18 @@ public class FileDataStorageManager {
         return filename;
     }
 
+    private void deletePendingRenameOperations(String path) {
+        offlineOperationDao.getAllByPath(path)
+            .stream()
+            .filter(operation -> operation.getType() instanceof OfflineOperationType.RenameFile)
+            .forEach(offlineOperationDao::delete);
+    }
+
     public void addRemoveFileOfflineOperation(@NonNull OCFile file) {
         OfflineOperationEntity entity = new OfflineOperationEntity();
 
         String path = file.getDecryptedRemotePath();
+        deletePendingRenameOperations(path);
         entity.setFilename(file.getFileName());
         entity.setParentOCFileId(file.getParentId());
 
@@ -355,7 +378,10 @@ public class FileDataStorageManager {
             return;
         }
 
-        String newPath = parentFolder.getDecryptedRemotePath() + newFolderName + OCFile.PATH_SEPARATOR;
+        String newPath = parentFolder.getDecryptedRemotePath() + newFolderName;
+        if (file.isFolder()) {
+            newPath += OCFile.PATH_SEPARATOR;
+        }
 
         if (entity.getType() instanceof OfflineOperationType.CreateFolder createFolderType) {
             createFolderType.setPath(newPath);
@@ -370,6 +396,7 @@ public class FileDataStorageManager {
         offlineOperationDao.update(entity);
 
         moveLocalFile(file, newPath, parentFolder.getDecryptedRemotePath());
+        offlineOperationsRepository.updateNextOperations(entity);
     }
 
     public void keepOfflineOperationAndServerFile(OfflineOperationEntity entity, OCFile file, OwnCloudClient client) {
@@ -634,17 +661,11 @@ public class FileDataStorageManager {
     }
 
     /**
-     * Ensures that an {@link OCFile} and all of its parent folders are stored locally.
+     * Saves an {@link OCFile} and ensures that all of its parent folders are stored locally.
      * <p>
-     * If the file has no parent ID and is not the root folder, this method recursively:
-     * <ul>
-     *     <li>Resolves the parent path</li>
-     *     <li>Loads the parent from local storage or fetches it from the server</li>
-     *     <li>Saves all missing parent folders</li>
-     *     <li>Assigns the resolved parent ID to the file</li>
-     * </ul>
+     * Parent folders missing from local storage are fetched from the server and saved recursively.
      *
-     * @param ocFile    the file to be saved together with its parent hierarchy
+     * @param ocFile  the file to be saved together with its parent hierarchy
      * @param context Android context used for remote operations
      *
      * @return the same {@link OCFile} instance with a valid parent ID
@@ -652,51 +673,45 @@ public class FileDataStorageManager {
      * @throws RemoteOperationFailedException if a parent folder cannot be retrieved
      *                                       from the server
      */
-    public OCFile saveFileWithParent(OCFile ocFile, Context context) {
-        if (ocFile.getParentId() == 0 && !OCFile.ROOT_PATH.equals(ocFile.getRemotePath())) {
-            Log_OC.d(TAG, "saving file with parents: " + ocFile.getRemotePath());
-
-            String remotePath = ocFile.getRemotePath();
-            String parentPath = remotePath.substring(0, remotePath.lastIndexOf(ocFile.getFileName()));
-
-            OCFile parentFile = getFileByPath(parentPath);
-            OCFile returnFile;
-
-            if (parentFile == null) {
-                Log_OC.d(TAG, "Parent not found locally, fetching: " + parentPath);
-
-                final var operation = new ReadFileRemoteOperation(parentPath);
-                final var result = operation.execute(getUser(), context);
-
-                if (result.isSuccess() && result.getData().get(0) instanceof RemoteFile remoteFile) {
-                    OCFile folder = FileStorageUtils.fillOCFile(remoteFile);
-                    Log_OC.d(TAG, "Fetched parent folder: " + folder);
-                    returnFile = saveFileWithParent(folder, context);
-                } else {
-                    Exception exception = result.getException();
-                    String message = "Error during saving file with parents: " + ocFile.getRemotePath() + " / "
-                        + result.getLogMessage(context);
-
-                    Log_OC.e(TAG, message);
-
-                    if (exception != null) {
-                        throw new RemoteOperationFailedException(message, exception);
-                    } else {
-                        throw new RemoteOperationFailedException(message);
-                    }
-                }
-            } else {
-                Log_OC.d(TAG, "parent file exists, calling saveFileWithParent: " + ocFile.getRemotePath());
-                returnFile = saveFileWithParent(parentFile, context);
-            }
-
-            long parentId = returnFile.getFileId();
-            Log_OC.d(TAG, "saving parent id of: " + ocFile.getRemotePath() + " with: " + parentId);
-            ocFile.setParentId(parentId);
-            saveFile(ocFile);
+    public OCFile saveFileWithParent(OCFile ocFile, Context context) throws RemoteOperationFailedException {
+        boolean isParentMissing = ocFile.getParentId() == 0 && !OCFile.ROOT_PATH.equals(ocFile.getRemotePath());
+        if (isParentMissing) {
+            OCFile parent = getOrFetchParentFolder(ocFile.getRemotePath(), context);
+            ocFile.setParentId(parent.getFileId());
         }
 
+        saveFile(ocFile);
         return ocFile;
+    }
+
+    private OCFile getOrFetchParentFolder(String remotePath, Context context) {
+        String parentPath = FileStorageUtils.getParentPath(remotePath);
+        OCFile localParent = getFileByEncryptedRemotePath(parentPath);
+        if (localParent != null) {
+            return localParent;
+        }
+
+        Log_OC.d(TAG, "Parent not found locally, fetching: " + parentPath);
+        OCFile remoteParent = FileStorageUtils.fillOCFile(fetchRemoteFolder(parentPath, context));
+        return saveFileWithParent(remoteParent, context);
+    }
+
+    @SuppressWarnings("deprecation")
+    private RemoteFile fetchRemoteFolder(String remotePath, Context context) {
+        final var result = new ReadFileRemoteOperation(remotePath).execute(getUser(), context);
+        final var remoteFile = ResultParser.data(result, RemoteFile.class);
+        if (remoteFile != null) {
+            return remoteFile;
+        }
+
+        String message = "Cannot fetch folder: " + remotePath + " / " + result.getLogMessage(context);
+        Log_OC.e(TAG, message);
+
+        Exception exception = result.getException();
+        if (exception == null) {
+            throw new RemoteOperationFailedException(message);
+        }
+        throw new RemoteOperationFailedException(message, exception);
     }
 
     public static void clearTempEncryptedFolder(String accountName) {
@@ -744,127 +759,9 @@ public class FileDataStorageManager {
 
 
     /**
-     * Inserts or updates the list of files contained in a given folder.
-     * <p>
-     * CALLER IS RESPONSIBLE FOR GRANTING RIGHT UPDATE OF INFORMATION, NOT THIS METHOD. HERE ONLY DATA CONSISTENCY
-     * SHOULD BE GRANTED
-     *
-     * @param folder
-     * @param updatedFiles
-     * @param filesToRemove
-     */
-    public void saveFolder(OCFile folder, List<OCFile> updatedFiles, Collection<OCFile> filesToRemove) {
-        Log_OC.d(TAG, "Saving folder " + folder.getRemotePath() + " with " + updatedFiles.size()
-            + " children and " + filesToRemove.size() + " files to remove");
-
-        ArrayList<ContentProviderOperation> operations = new ArrayList<>(updatedFiles.size());
-
-        // prepare operations to insert or update files to save in the given folder
-        for (OCFile ocFile : updatedFiles) {
-            ContentValues contentValues = createContentValuesForFile(ocFile);
-            contentValues.put(ProviderTableMeta.FILE_PARENT, folder.getFileId());
-
-            if (fileExists(ocFile.getFileId()) || fileExists(ocFile.getRemotePath())) {
-                long fileId;
-                if (ocFile.getFileId() != -1) {
-                    fileId = ocFile.getFileId();
-                } else {
-                    fileId = getFileByPath(ocFile.getRemotePath()).getFileId();
-                }
-                // updating an existing file
-                operations.add(ContentProviderOperation.newUpdate(ProviderTableMeta.CONTENT_URI)
-                                   .withValues(contentValues)
-                                   .withSelection(ProviderTableMeta._ID + " = ?", new String[]{String.valueOf(fileId)})
-                                   .build());
-            } else {
-                // adding a new file
-                operations.add(ContentProviderOperation.newInsert(ProviderTableMeta.CONTENT_URI)
-                                   .withValues(contentValues)
-                                   .build());
-            }
-        }
-
-        // prepare operations to remove files in the given folder
-        String where = ProviderTableMeta.FILE_ACCOUNT_OWNER + AND + ProviderTableMeta.FILE_PATH + " = ?";
-        String[] whereArgs = new String[2];
-        whereArgs[0] = user.getAccountName();
-        for (OCFile ocFile : filesToRemove) {
-            if (ocFile.getParentId() == folder.getFileId()) {
-                whereArgs[1] = ocFile.getRemotePath();
-                if (ocFile.isFolder()) {
-                    operations.add(ContentProviderOperation.newDelete(
-                            ContentUris.withAppendedId(ProviderTableMeta.CONTENT_URI_DIR, ocFile.getFileId()))
-                                       .withSelection(where, whereArgs).build());
-
-                    File localFolder = new File(FileStorageUtils.getDefaultSavePathFor(user.getAccountName(), ocFile));
-                    if (localFolder.exists()) {
-                        removeLocalFolder(localFolder);
-                    }
-                } else {
-                    operations.add(ContentProviderOperation.newDelete(
-                            ContentUris.withAppendedId(ProviderTableMeta.CONTENT_URI_FILE, ocFile.getFileId()))
-                                       .withSelection(where, whereArgs).build());
-
-                    if (ocFile.isDown()) {
-                        String path = ocFile.getStoragePath();
-                        if (new File(path).delete() && MimeTypeUtil.isMedia(ocFile.getMimeType())) {
-                            triggerMediaScan(path, ocFile); // notify MediaScanner about removed file
-                        }
-                    }
-                }
-            }
-        }
-
-        // update metadata of folder
-        ContentValues contentValues = createContentValuesForFolder(folder);
-
-        operations.add(ContentProviderOperation.newUpdate(ProviderTableMeta.CONTENT_URI)
-                           .withValues(contentValues)
-                           .withSelection(ProviderTableMeta._ID + " = ?", new String[]{String.valueOf(folder.getFileId())})
-                           .build());
-
-        // apply operations in batch
-        ContentProviderResult[] results = null;
-        Log_OC.d(TAG, String.format(Locale.ENGLISH, SENDING_TO_FILECONTENTPROVIDER_MSG, operations.size()));
-
-        try {
-            if (getContentResolver() != null) {
-                results = getContentResolver().applyBatch(MainApp.getAuthority(), operations);
-
-            } else {
-                results = getContentProviderClient().applyBatch(operations);
-            }
-
-        } catch (OperationApplicationException | RemoteException e) {
-            Log_OC.e(TAG, EXCEPTION_MSG + e.getMessage(), e);
-        }
-
-        // update new id in file objects for insertions
-        if (results != null) {
-            long newId;
-            Iterator<OCFile> fileIterator = updatedFiles.iterator();
-            OCFile ocFile;
-            for (ContentProviderResult result : results) {
-                if (fileIterator.hasNext()) {
-                    ocFile = fileIterator.next();
-                } else {
-                    ocFile = null;
-                }
-                if (result.uri != null) {
-                    newId = Long.parseLong(result.uri.getPathSegments().get(1));
-                    if (ocFile != null) {
-                        ocFile.setFileId(newId);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
      * Returns a {@link ContentValues} filled with values that are common to both files and folders
      *
      * @see #createContentValuesForFile(OCFile)
-     * @see #createContentValuesForFolder(OCFile)
      */
     @SuppressFBWarnings("CE")
     private ContentValues createContentValuesBase(OCFile fileOrFolder) {
@@ -905,21 +802,8 @@ public class FileDataStorageManager {
     }
 
     /**
-     * Returns a {@link ContentValues} filled with values for a folder
-     *
-     * @see #createContentValuesForFile(OCFile)
-     * @see #createContentValuesBase(OCFile)
-     */
-    private ContentValues createContentValuesForFolder(OCFile folder) {
-        final ContentValues cv = createContentValuesBase(folder);
-        cv.put(ProviderTableMeta.FILE_CONTENT_LENGTH, 0);
-        return cv;
-    }
-
-    /**
      * Returns a {@link ContentValues} filled with values for a file
      *
-     * @see #createContentValuesForFolder(OCFile)
      * @see #createContentValuesBase(OCFile)
      */
     @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
@@ -1127,7 +1011,7 @@ public class FileDataStorageManager {
         return success;
     }
 
-    private boolean removeLocalFolder(File localFolder) {
+    public boolean removeLocalFolder(File localFolder) {
         if (localFolder == null) {
             Log_OC.d(TAG, "removeLocalFolder(File): folder is null");
             return false;
@@ -2734,19 +2618,7 @@ public class FileDataStorageManager {
     }
 
     public void deleteAllFiles() {
-        String where = ProviderTableMeta.FILE_ACCOUNT_OWNER + "= ? AND " +
-            ProviderTableMeta.FILE_PATH + "= ?";
-        String[] whereArgs = new String[]{user.getAccountName(), OCFile.ROOT_PATH};
-
-        if (getContentResolver() != null) {
-            getContentResolver().delete(ProviderTableMeta.CONTENT_URI_DIR, where, whereArgs);
-        } else {
-            try {
-                getContentProviderClient().delete(ProviderTableMeta.CONTENT_URI_DIR, where, whereArgs);
-            } catch (RemoteException e) {
-                Log_OC.e(TAG, "Exception in deleteAllFiles for account " + user.getAccountName() + ": " + e.getMessage(), e);
-            }
-        }
+        fileDao.deleteAllFiles(user.getAccountName());
     }
 
     public String getFolderName(String path) {
@@ -2813,6 +2685,11 @@ public class FileDataStorageManager {
         OCFile root = getEncryptedRootFolder(file);
         if (root != null) {
             fileDao.setReadOnly(user.getAccountName(), root.getRemotePath(), readOnly ? 1 : 0);
+
+            // RefreshFolderOperation saves the opened folder object back to the database
+            if (root.getRemotePath().equals(file.getRemotePath())) {
+                file.setReadOnly(readOnly);
+            }
         }
     }
 

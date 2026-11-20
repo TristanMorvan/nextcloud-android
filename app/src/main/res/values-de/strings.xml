@@ -343,6 +343,7 @@
     <string name="download_download_invalid_local_file_name">Ungültiger Dateiname für lokale Datei</string>
     <string name="download_latest_dev_version">Die neueste Entwicklerversion herunterladen</string>
     <string name="download_limit">Download-Limit</string>
+    <string name="downloader_download_canceled">Herunterladen abgebrochen</string>
     <string name="downloader_download_failed_content">Konnte %1$s nicht herunterladen</string>
     <string name="downloader_download_failed_credentials_error">Herunterladen fehlgeschlagen, erneute Anmeldung erforderlich</string>
     <string name="downloader_download_failed_ticker">Herunterladen fehlgeschlagen</string>
@@ -351,7 +352,6 @@
     <string name="downloader_download_in_progress_ticker">Lade herunter …</string>
     <string name="downloader_download_succeeded_content">%1$s heruntergeladen</string>
     <string name="downloader_download_succeeded_ticker">Heruntergeladen</string>
-    <string name="downloader_file_download_cancelled">Bestimmte Dateien wurden während des Downloads durch den Benutzer abgebrochen</string>
     <string name="downloader_file_download_failed">Es ist ein Fehler beim Herunterladen der Dateien aufgetreten.</string>
     <string name="downloader_not_downloaded_yet">Noch nicht Heruntergeladen</string>
     <string name="downloader_unexpected_error">Es ist ein unerwarteter Fehler beim Herunterladen der Dateien aufgetreten</string>
@@ -1173,6 +1173,7 @@
     <string name="upload_cannot_create_file">Datei kann lokal nicht erstellt werden</string>
     <string name="upload_chooser_title">Dateien hochladen von …</string>
     <string name="upload_content_from_other_apps">Inhalt anderer Apps hochladen</string>
+    <string name="upload_direct_camera_not_found">Keine Kamera gefunden</string>
     <string name="upload_direct_camera_photo">Foto</string>
     <string name="upload_direct_camera_promt">Möchten Sie ein Foto oder ein Video aufnehmen?</string>
     <string name="upload_direct_camera_upload">Von Kamera hochladen</string>
@@ -1206,6 +1207,7 @@
     <string name="upload_old_android">Verschlüsselung ist nur möglich mit &gt;= Android 5.0</string>
     <string name="upload_query_move_foreign_files">Es steht nicht genügend Speicherplatz zur Verfügung, um die ausgewählten Dateien in das Verzeichnis %1$s zu kopieren. Sollen diese stattdessen verschoben werden?</string>
     <string name="upload_quota_exceeded">Speicherkontingent überschritten</string>
+    <string name="upload_quota_exceeded_notification_description">Ihr Speicherplatz ist voll, daher wurde das Hochladenangehalten. Speicherplatz freimachen oder die Administration um mehr Speicherplatz bitten. Anschließend versuchen, die fehlgeschlagenen Uploads über \"Uploads\" erneut durchzuführen.</string>
     <string name="upload_scan_doc_upload">Dokument von der Kamera scannen</string>
     <string name="upload_sync_conflict_check">Möglicherweise liegt ein Konflikt bezüglich des letzten Uploads vor. Bitte Tippen, um zu überprüfen.</string>
     <string name="upload_sync_conflict_check_error">Es konnte nicht auf Hochlade-Konflikte überprüft werden. Bitte erneut versuchen.</string>
@@ -1379,7 +1381,7 @@
         <item quantity="other">%1$d Elemente</item>
     </plurals>
     <plurals name="synced_folders_show_hidden_folders">
-        <item quantity="one">Zeige %1$dversteckten Ordner</item>
+        <item quantity="one">Zeige %1$d versteckten Ordner</item>
         <item quantity="other">Zeige %1$d versteckte Ordner</item>
     </plurals>
     <plurals name="items_selected_count">
