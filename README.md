@@ -15,7 +15,7 @@
 > ([#17726](https://github.com/nextcloud/android/pull/17726) fermee sans merge).
 >
 > **Aucun code modifie ici :** l'APK est `master` amont compile tel quel. Voir la release
-> [titucle-35.1.0](https://github.com/TristanMorvan/nextcloud-android/releases/tag/titucle-35.1.0)
+> [titucle-35.1.0](https://github.com/TristanMorvan/nextcloud-android/releases/tag/titucle-35.1.0-2)
 > (asset `titucle-nextcloud.apk`, SHA-256 et empreinte de signature rappelles).
 
 
